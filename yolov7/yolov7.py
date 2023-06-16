@@ -145,10 +145,10 @@ class yolov7:
 
 # This class contains the ros interface wrapper for the detection model
 # - Initializes the node
-# - Creates the BBox publisher
+#- Creates the BBox publisher
 # - Creates the Image suscriber
 # - Receives the images, make the inference
-# - Sends the results
+# - Sends the resultsen groups=1, wei
 class ros_interface(Node):
 
     def __init__(self):
@@ -164,7 +164,8 @@ class ros_interface(Node):
         self.pub = self.create_publisher(BoundingBoxes,"bboxes",10)
 
         # Creating the suscriber
-        self.sub = self.create_subscription(Image, '/camera/rgb/image_raw', self.detection_callback,10)
+        self.sub = self.create_subscription(Image, '/zed2/zed_node/rgb/image_rect_color', self.detection_callback,10)
+        # self.sub = self.create_subscription(Image, '/camera/rgb/image_raw', self.detection_callback,10)
         
 
     def detection_callback(self,img_msg:Image):
@@ -174,6 +175,7 @@ class ros_interface(Node):
         img = self.bridge.imgmsg_to_cv2(img_msg)
 
         # Making the inference
+        img = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
         ouput = self.model.Inference(img)
 
         # Converting output to BBox
