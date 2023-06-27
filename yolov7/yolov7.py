@@ -163,7 +163,7 @@ class ros_interface(Node):
         # Creating the publisher
         self.pub = self.create_publisher(BoundingBoxes,"bboxes",10)
 
-        # Creating the suscriber
+        # Creating the suscriber
         self.sub = self.create_subscription(Image, '/zed2/zed_node/rgb/image_rect_color', self.detection_callback,10)
         # self.sub = self.create_subscription(Image, '/camera/rgb/image_raw', self.detection_callback,10)
         
@@ -183,8 +183,6 @@ class ros_interface(Node):
 
         # Publish results
         self.pub.publish(msg)
-
-
 
 
 def ros_main(args=None):
