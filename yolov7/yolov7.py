@@ -44,12 +44,10 @@ class yolov7:
         # Loading the model
         self.setup_model()
 
-
     def setup_model(self):
         """ Load the model and the parameters"""
 
         # Parameters
-        # self.source = "./concours.jpg"
         self.weigth = "src/yolov7/weigths/coco_merged_yolov7.pt"
         self.img_size = 640
         self.conf_thres = 0.25
@@ -86,6 +84,7 @@ class yolov7:
         
         # Padded resize
         img = letterbox(image, self.img_size, stride=self.stride)[0]
+
         # Convert
         img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
         img = np.ascontiguousarray(img)
@@ -164,7 +163,7 @@ class ros_interface(Node):
         self.pub = self.create_publisher(BoundingBoxes,"bboxes",10)
 
         # Creating the suscriber
-        self.sub = self.create_subscription(Image, '/zed2/zed_node/rgb/image_rect_color', self.detection_callback,10)
+        self.sub = self.create_subscription(Image, '/zed2i/zed_node/rgb/image_rect_color', self.detection_callback,10)
         # self.sub = self.create_subscription(Image, '/camera/rgb/image_raw', self.detection_callback,10)
         
 
@@ -185,7 +184,7 @@ class ros_interface(Node):
         self.pub.publish(msg)
 
 
-def ros_main(args=None):
+def ros_main(args=None): # self.get_logger().info(f"{np.unique(img)}")
     """Launch the yolov7 node"""
     print(os.getcwd())
     rclpy.init(args=args)
