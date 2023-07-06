@@ -1,13 +1,28 @@
 import cv2
+import rclpy
 import torch
+from std_msgs.msg import Header
 from bbox_interfaces.msg import BoundingBox
 from bbox_interfaces.msg import BoundingBoxes
 
+def yolo2bboxs(output,names,colors,width,heigth,img_header:Header)->BoundingBoxes:
+    """"Convert a yolov7 bounding box to a BoundingBoxes message for ROS2 
+    params : 
+        output : original yolov7 output
+        names : dict of number : label
+        colors : dict number color
+        width and heigth : image dimension
+        img_header : ros msg header
 
-def yolo2bboxs(output,names,colors,width,heigth)->BoundingBoxes:
-    """"Convert a yolov7 bounding box to a BoundingBoxes message for ROS2 """
+    returns : BoundingBoxes object
 
+             """
+    
+    # Bounding box object
     res = BoundingBoxes()
+
+    # header
+    res.header = img_header
 
     for i in output:
         for *xyxy, conf, cls in reversed(i):

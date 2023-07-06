@@ -82,6 +82,12 @@ class yolov7:
     def Inference(self,image:cv2):
         """ Run an inference on an image"""
         
+        # Applying a mask to the image to filter the other objects
+        contour = np.array([[0,634],[0,500],[648,148],[1127,280],[971,682]]) #27 points
+        mask    = np.zeros_like(image)
+        cv2.fillPoly(mask, pts=[contour], color=(255, 255, 255))
+        image = cv2.bitwise_and(image, mask)
+
         # Padded resize
         img = letterbox(image, self.img_size, stride=self.stride)[0]
 
@@ -178,13 +184,15 @@ class ros_interface(Node):
         ouput = self.model.Inference(img)
 
         # Converting output to BBox
-        msg = yolo2bboxs(ouput,self.model.names,self.model.colors,img.shape[1],img.shape[0])
+        msg = yolo2bboxs(ouput,self.model.names,self.model.colors,img.shape[1],img.shape[0],img_header=img_msg.header)
 
         # Publish results
+        
         self.pub.publish(msg)
 
 
-def ros_main(args=None): # self.get_logger().info(f"{np.unique(img)}")
+def ros_main(args=None): 
+    # self.get_logger().info(f"{np.unique(img)}")
     """Launch the yolov7 node"""
     print(os.getcwd())
     rclpy.init(args=args)
