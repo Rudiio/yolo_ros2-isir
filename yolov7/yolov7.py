@@ -49,6 +49,7 @@ class yolov7:
 
         # Parameters
         self.weigth = "src/yolov7/weigths/coco_merged_yolov7.pt"
+        # self.weigth = "src/yolov7/weigths/best.pt"
         self.img_size = 640
         self.conf_thres = 0.25
         self.iou_thres = 0.45
@@ -78,15 +79,14 @@ class yolov7:
         self.names = self.model.module.names if hasattr(self.model, 'module') else self.model.names
         self.colors = [[random.randint(0, 255) for _ in range(3)] for _ in self.names]
 
-    
     def Inference(self,image:cv2):
         """ Run an inference on an image"""
         
         # Applying a mask to the image to filter the other objects
-        contour = np.array([[0,634],[0,500],[648,148],[1127,280],[971,682]]) #27 points
-        mask    = np.zeros_like(image)
-        cv2.fillPoly(mask, pts=[contour], color=(255, 255, 255))
-        image = cv2.bitwise_and(image, mask)
+        # contour = np.array([[0,719],[0,450],[648,148],[1127,280],[971,719]]) 
+        # mask    = np.zeros_like(image)
+        # cv2.fillPoly(mask, pts=[contour], color=(255, 255, 255))
+        # image = cv2.bitwise_and(image, mask)
 
         # Padded resize
         img = letterbox(image, self.img_size, stride=self.stride)[0]
@@ -169,7 +169,7 @@ class ros_interface(Node):
         self.pub = self.create_publisher(BoundingBoxes,"bboxes",10)
 
         # Creating the suscriber
-        self.sub = self.create_subscription(Image, '/zed2i/zed_node/rgb/image_rect_color', self.detection_callback,10)
+        self.sub = self.create_subscription(Image, '/zed2/zed_node/rgb/image_rect_color', self.detection_callback,10)
         # self.sub = self.create_subscription(Image, '/camera/rgb/image_raw', self.detection_callback,10)
         
 
@@ -209,8 +209,3 @@ def ros_main(args=None):
 
 if __name__=="__main__":
     ros_main()
-
-
-# FIltrage particulaire -> 3 pavé et angles  et distances entre eux et réduction de feature 
-# Algo génétique 
-# Avec la depth -> axe en 3d
