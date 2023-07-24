@@ -40,16 +40,17 @@ from utils.yolo2bbox import yolo2bboxs
 # - Loads the model
 # - Makes the inference
 class yolov7:
-    def __init__(self):
+    def __init__(self,weigth):
         # Loading the model
-        self.setup_model()
+        self.setup_model(weigth)
 
-    def setup_model(self):
+    def setup_model(self,weigth):
         """ Load the model and the parameters"""
 
         # Parameters
-        self.weigth = "src/yolov7/weigths/coco_merged_yolov7.pt"
-        # self.weigth = "src/yolov7/weigths/best.pt"
+        self.weigth = weigth
+        # self.weigth = "src/yolov7/weigths/coco_merged_yolov7.pt"
+        # self.weigth = "src/yolov7/weigths/empty_seats.pt"
         self.img_size = 640
         self.conf_thres = 0.25
         self.iou_thres = 0.45
@@ -156,23 +157,28 @@ class yolov7:
 # - Sends the resultsen groups=1, wei
 class ros_interface(Node):
 
-    def __init__(self):
+    def __init__(self,args):
         super().__init__("yolov7")
 
+        # Getting arguments
+        self.declare_parameter("topic",'bboxes')
+        self.declare_parameter("weigth",'src/yolov7/weigths/coco_merged_yolov7.pt')
+        topic = self.get_parameter("topic").get_parameter_value().string_value
+        weigth = self.get_parameter("weigth").get_parameter_value().string_value
+
         # Creating the model
-        self.model = yolov7()
+        self.model = yolov7(weigth)
 
         # Creating the bridge : ROS2  -> CV2 
         self.bridge = CvBridge()
 
         # Creating the publisher
-        self.pub = self.create_publisher(BoundingBoxes,"bboxes",10)
+        self.pub = self.create_publisher(BoundingBoxes,topic,10)
 
         # Creating the suscriber
         self.sub = self.create_subscription(Image, '/zed2/zed_node/rgb/image_rect_color', self.detection_callback,10)
         # self.sub = self.create_subscription(Image, '/camera/rgb/image_raw', self.detection_callback,10)
         
-
     def detection_callback(self,img_msg:Image):
         """Callback function for the Image suscriber"""
 
@@ -192,11 +198,10 @@ class ros_interface(Node):
 
 
 def ros_main(args=None): 
-    # self.get_logger().info(f"{np.unique(img)}")
     """Launch the yolov7 node"""
-    print(os.getcwd())
+
     rclpy.init(args=args)
-    node = ros_interface()
+    node = ros_interface(args)
     
     try:
         rclpy.spin(node)
