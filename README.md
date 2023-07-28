@@ -49,6 +49,8 @@ uint16 img_heigth
 BoundingBox[] bboxes
 ```
 
+To install : 
+
 ``` shell
 # cloning the repo into the ROS2 workspace
 git clone https://github.com/Rudiio/yolo_ros2-isir.git
