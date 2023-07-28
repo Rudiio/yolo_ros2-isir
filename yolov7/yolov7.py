@@ -33,7 +33,48 @@ from utils.general import check_img_size, check_requirements, check_imshow, non_
 from utils.plots import plot_one_box
 from utils.torch_utils import select_device, load_classifier, time_synchronized, TracedModel
 from utils.datasets import letterbox
-from utils.yolo2bbox import yolo2bboxs
+from utils.yolo2bbox import yolo2bboxs,yolov8tobboxs
+from ultralytics import YOLO
+
+
+class yolov8:
+    def __init__(self,weigth):
+
+        # Loading the model
+        self.setup_model(weigth)
+
+
+    def setup_model(self,weigth):
+        """ Load the model and the parameters"""
+
+        # Parameters
+        # self.source = "./concours.jpg"
+        self.weigth = weigth # "src/yolov7/weigths/empty_seats_yolov8.pt"
+        self.img_size = 640
+        self.conf_thres = 0.25
+        self.iou_thres = 0.45
+        self.device = 'cpu'
+        self.trace = 1
+        self.augment = False
+        self.warmup = True
+        self.visualisation = True
+
+        # Load model
+        self.model = YOLO('src/yolov7/weigths/yolov8m.pt')
+        self.model = YOLO(self.weigth)
+    
+        # Get names and colors
+        self.names = self.model.module.names if hasattr(self.model, 'module') else self.model.names
+        self.colors = [[random.randint(0, 255) for _ in range(3)] for _ in self.names]
+
+    
+    def Inference(self,image:cv2):
+        """ Run an inference on an image"""
+        
+        pred = self.model(image,save=False,conf=self.conf_thres,iou=self.iou_thres,show=False,verbose=False)
+
+        return pred
+
 
 
 # Class that contains the yolov7 model
@@ -163,11 +204,16 @@ class ros_interface(Node):
         # Getting arguments
         self.declare_parameter("topic",'bboxes')
         self.declare_parameter("weigth",'src/yolov7/weigths/coco_merged_yolov7.pt')
+        self.declare_parameter("model",'yolov7')
         topic = self.get_parameter("topic").get_parameter_value().string_value
+        self.model_use = self.get_parameter("model").get_parameter_value().string_value
         weigth = self.get_parameter("weigth").get_parameter_value().string_value
 
         # Creating the model
-        self.model = yolov7(weigth)
+        if self.model_use=='yolov7':
+            self.model = yolov7(weigth)
+        elif self.model_use=='yolov8':
+            self.model = yolov8(weigth)
 
         # Creating the bridge : ROS2  -> CV2 
         self.bridge = CvBridge()
@@ -190,7 +236,11 @@ class ros_interface(Node):
         ouput = self.model.Inference(img)
 
         # Converting output to BBox
-        msg = yolo2bboxs(ouput,self.model.names,self.model.colors,img.shape[1],img.shape[0],img_header=img_msg.header)
+        msg = None
+        if self.model_use=='yolov7':
+            msg = yolo2bboxs(ouput,self.model.names,self.model.colors,img.shape[1],img.shape[0],img_header=img_msg.header)
+        elif self.model_use=='yolov8':
+            msg = yolov8tobboxs(ouput,self.model.names,self.model.colors,img.shape[1],img.shape[0],img_header=img_msg.header)
 
         # Publish results
         

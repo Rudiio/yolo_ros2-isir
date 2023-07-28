@@ -45,6 +45,9 @@ def yolo2bboxs(output,names,colors,width,heigth,img_header:Header)->BoundingBoxe
             # color 
             bbox.color = colors[int(cls)]
 
+            # Position
+            bbox.pos_available = False
+
             res.bboxes.append(bbox)
 
     res.img_width = width
@@ -52,10 +55,12 @@ def yolo2bboxs(output,names,colors,width,heigth,img_header:Header)->BoundingBoxe
 
     return res
 
-def yolov8tobboxs(output,names,colors,width,heigth)->BoundingBoxes:
+def yolov8tobboxs(output,names,colors,width,heigth,img_header:Header)->BoundingBoxes:
     """"Convert a yolov7 bounding box to a BoundingBoxes message for ROS2 """
 
     res = BoundingBoxes()
+    # header
+    res.header = img_header
 
     for results in output:
         for yolobbox in results.boxes:
