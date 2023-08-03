@@ -10,15 +10,13 @@ from sensor_msgs.msg import Image
 from bbox_interfaces.msg import BoundingBox
 from bbox_interfaces.msg import BoundingBoxes
 
+# Librairies imports
 import time
-import os
 import sys
 import numpy as np
 from pathlib import Path
-
 import cv2
 import torch
-import torch.backends.cudnn as cudnn
 from numpy import random
 
 # To import the modules of the model
@@ -34,6 +32,8 @@ from utils.plots import plot_one_box
 from utils.torch_utils import select_device, load_classifier, time_synchronized, TracedModel
 from utils.datasets import letterbox
 from utils.yolo2bbox import yolo2bboxs,yolov8tobboxs
+
+# Import for yolov8
 from ultralytics import YOLO
 
 
@@ -42,7 +42,6 @@ class yolov8:
 
         # Loading the model
         self.setup_model(weigth)
-
 
     def setup_model(self,weigth):
         """ Load the model and the parameters"""
@@ -67,15 +66,12 @@ class yolov8:
         self.names = self.model.module.names if hasattr(self.model, 'module') else self.model.names
         self.colors = [[random.randint(0, 255) for _ in range(3)] for _ in self.names]
 
-    
     def Inference(self,image:cv2):
         """ Run an inference on an image"""
         
         pred = self.model(image,save=False,conf=self.conf_thres,iou=self.iou_thres,show=False,verbose=False)
 
         return pred
-
-
 
 # Class that contains the yolov7 model
 # - Loads the model
@@ -245,7 +241,6 @@ class ros_interface(Node):
         # Publish results
         
         self.pub.publish(msg)
-
 
 def ros_main(args=None): 
     """Launch the yolov7 node"""
