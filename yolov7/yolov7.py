@@ -75,8 +75,6 @@ class yolov8:
 
         return pred
 
-
-
 # Class that contains the yolov7 model
 # - Loads the model
 # - Makes the inference
@@ -222,7 +220,7 @@ class ros_interface(Node):
         self.pub = self.create_publisher(BoundingBoxes,topic,10)
 
         # Creating the suscriber
-        self.sub = self.create_subscription(Image, '/zed2/zed_node/rgb/image_rect_color', self.detection_callback,10)
+        self.sub = self.create_subscription(Image, '/zed2i/zed_node/rgb/image_rect_color', self.detection_callback,10)
         # self.sub = self.create_subscription(Image, '/camera/rgb/image_raw', self.detection_callback,10)
         
     def detection_callback(self,img_msg:Image):
