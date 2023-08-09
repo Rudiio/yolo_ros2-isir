@@ -38,16 +38,29 @@ from ultralytics import YOLO
 
 
 class yolov8:
+    """Class that wraps the yolov8 model from ultralytics for a simpler integration with ROS2.
+    It have two main methods : setup_model and Inference.
+    """
     def __init__(self,weigth):
 
         # Loading the model
         self.setup_model(weigth)
 
     def setup_model(self,weigth):
-        """ Load the model and the parameters"""
+        """
+        Load the model
+
+        Parameters
+        ----------
+        weigth : str
+            Path to model weigth
+
+        Returns
+        -------
+        Save the loaded model into the class
+        """
 
         # Parameters
-        # self.source = "./concours.jpg"
         self.weigth = weigth # "src/yolov7/weigths/empty_seats_yolov8.pt"
         self.img_size = 640
         self.conf_thres = 0.25
@@ -61,33 +74,55 @@ class yolov8:
         # Load model
         self.model = YOLO('src/yolov7/weigths/yolov8m.pt')
         self.model = YOLO(self.weigth)
-    
+
         # Get names and colors
         self.names = self.model.module.names if hasattr(self.model, 'module') else self.model.names
         self.colors = [[random.randint(0, 255) for _ in range(3)] for _ in self.names]
 
-    def Inference(self,image:cv2):
-        """ Run an inference on an image"""
+    def Inference(self,image:cv2.Mat):
+        """
+        Make an inference from an RGB image.
+        Return the results of that inference
+
+        Parameters
+        ----------
+        image : cv2.Mat
+            RGB image
+
+        Returns
+        -------
+        pred : 
+            The prediction
+        """
         
         pred = self.model(image,save=False,conf=self.conf_thres,iou=self.iou_thres,show=False,verbose=False)
 
         return pred
 
-# Class that contains the yolov7 model
-# - Loads the model
-# - Makes the inference
 class yolov7:
+    """Class that wraps the yolov7 model from https://github.com/WongKinYiu/yolov7 for a simpler integration with ROS2.
+    It have two main methods : setup_model and Inference.
+    """
     def __init__(self,weigth):
         # Loading the model
         self.setup_model(weigth)
 
     def setup_model(self,weigth):
-        """ Load the model and the parameters"""
+        """
+        Load the model
+
+        Parameters
+        ----------
+        weigth : str
+            Path to model weigth
+
+        Returns
+        -------
+        Save the loaded model into the class
+        """
 
         # Parameters
         self.weigth = weigth
-        # self.weigth = "src/yolov7/weigths/coco_merged_yolov7.pt"
-        # self.weigth = "src/yolov7/weigths/empty_seats.pt"
         self.img_size = 640
         self.conf_thres = 0.25
         self.iou_thres = 0.45
@@ -118,7 +153,20 @@ class yolov7:
         self.colors = [[random.randint(0, 255) for _ in range(3)] for _ in self.names]
 
     def Inference(self,image:cv2):
-        """ Run an inference on an image"""
+        """
+        Make an inference from an RGB image.
+        Return the results of that inference
+
+        Parameters
+        ----------
+        image : cv2.Mat
+            RGB image
+
+        Returns
+        -------
+        pred : 
+            The prediction
+        """
         
         # Applying a mask to the image to filter the other objects
         # contour = np.array([[0,719],[0,450],[648,148],[1127,280],[971,719]]) 
@@ -174,14 +222,6 @@ class yolov7:
                 if len(det):
                     # Rescale boxes from img_size to im0 size
                     det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
-
-                    # Write results
-                    # if self.visualisation:
-                    #     for *xyxy, conf, cls in reversed(det):
-                    #         label = f'{self.names[int(cls)]} {conf:.2f}'
-                    #         plot_one_box(xyxy, im0, label=label, color=self.colors[int(cls)], line_thickness=3)
-
-            print(f'{s}Done. ({(1E3 * (t2 - t1)):.1f}ms) Inference, ({(1E3 * (t3 - t2)):.1f}ms) NMS')
                 
             return pred
 
@@ -193,8 +233,13 @@ class yolov7:
 # - Receives the images, make the inference
 # - Sends the resultsen groups=1, wei
 class ros_interface(Node):
-
+    """This class is the wrapper for yolov7 and yolov8 under ROS2.
+    It takes the RGB images from a topic and publish the Bounding boxes into another one"""
     def __init__(self,args):
+        """
+        Initialize the ROS node. The modekl and its weigths are given as ROS params.
+        """
+
         super().__init__("yolov7")
 
         # Getting arguments
@@ -219,10 +264,16 @@ class ros_interface(Node):
 
         # Creating the suscriber
         self.sub = self.create_subscription(Image, '/zed2i/zed_node/rgb/image_rect_color', self.detection_callback,10)
-        # self.sub = self.create_subscription(Image, '/camera/rgb/image_raw', self.detection_callback,10)
         
     def detection_callback(self,img_msg:Image):
-        """Callback function for the Image suscriber"""
+        """
+        It receives the images, make the inference and publish the results.
+
+        Parameters
+        ----------
+        img_msg : ROS image message
+            The image to process
+        """
 
         # Getting the image
         img = self.bridge.imgmsg_to_cv2(img_msg)
@@ -237,8 +288,6 @@ class ros_interface(Node):
             msg = yolo2bboxs(ouput,self.model.names,self.model.colors,img.shape[1],img.shape[0],img_header=img_msg.header)
         elif self.model_use=='yolov8':
             msg = yolov8tobboxs(ouput,self.model.names,self.model.colors,img.shape[1],img.shape[0],img_header=img_msg.header)
-
-        # Publish results
         
         self.pub.publish(msg)
 

@@ -23,7 +23,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'yolov7=yolov7.yolov7:ros_main'
+            'yolov7=yolov7.yolo:ros_main'
         ],
     },
 )
